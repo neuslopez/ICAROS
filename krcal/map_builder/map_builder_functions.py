@@ -500,7 +500,12 @@ def add_krevol(maps         : ASectorMap,
                x_range      : Tuple[float, float],
                y_range      : Tuple[float, float],
                XYbins       : Tuple[int, int],
-               **kwargs                          ) -> None:
+               detector     : str = 'new',
+               zrange_dv    : Tuple[float, float] = (500, 625),
+               nbins_dv     : int                 = 35,
+               zrange_lt    : Tuple[float,float]  = (0, 550),
+               zslices_lt   : int                 = 50,
+               **kwargs                                     ) -> None:
     """
     Adds time evolution dataframe to the map
 
@@ -546,7 +551,12 @@ def add_krevol(maps         : ASectorMap,
                                        xr_map     = x_range,
                                        yr_map     = y_range,
                                        nx_map     = XYbins[0],
-                                       ny_map     = XYbins[1])
+                                       ny_map     = XYbins[1],
+                                       detector   = detector,
+                                       zrange_lt  = zrange_lt,
+                                       zslices_lt = zslices_lt,
+                                       zrange_dv  = zrange_dv,
+                                       nbins_dv   = nbins_dv)
 
     pars_ec        = cut_time_evolution(masks_time = masks_time,
                                         dst        = dst,
@@ -555,6 +565,7 @@ def add_krevol(maps         : ASectorMap,
 
     e0par       = np.array([pars['e0'].mean(), pars['e0'].var()**0.5])
     ltpar       = np.array([pars['lt'].mean(), pars['lt'].var()**0.5])
+
     print("    Mean core E0: {0:.1f}+-{1:.1f} pes".format(*e0par))
     print("    Mean core Lt: {0:.1f}+-{1:.1f} mus".format(*ltpar))
 
@@ -578,6 +589,9 @@ def compute_map(dst          : pd.DataFrame,
                 r_max        : float = 200,
                 x_range      : Tuple[float, float] = (-200,200),
                 y_range      : Tuple[float, float] = (-200,200),
+                detector     : str = 'new',
+                zrange_dv    : Tuple[float, float] = (500, 625),
+                nbins_dv     : int                 = 35        ,
                 **kwargs                                       ) -> ASectorMap:
 
     maps = calculate_map (dst      = dst,
@@ -612,6 +626,7 @@ def compute_map(dst          : pd.DataFrame,
                                    nx         = XYbins[0],
                                    ny         = XYbins[1],
                                    run_number = int(run_number))
+
 
     return no_peripheral
 
