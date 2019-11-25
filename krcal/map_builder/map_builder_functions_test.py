@@ -6,6 +6,7 @@ import pandas as pd
 from pytest        import mark
 from pytest        import fixture
 from numpy.testing import assert_raises
+from numpy.testing import assert_allclose
 
 from invisible_cities.io  .dst_io          import load_dst
 from invisible_cities.core.testing_utils   import assert_dataframes_close
@@ -13,6 +14,7 @@ from invisible_cities.core.configure       import configure
 from invisible_cities.reco.corrections     import read_maps
 from invisible_cities.reco.corrections     import ASectorMap
 from invisible_cities.reco.corrections     import maps_coefficient_getter
+import invisible_cities.database.load_db as DB
 
 from . map_builder_functions import map_builder
 from . checking_functions    import AbortingMapCreation
@@ -182,6 +184,74 @@ def test_correct_map_with_unsorted_dst(folder_test_dst  ,
     assert_dataframes_close(unsorted_maps.e0u, sorted_maps.e0u, rtol=1e-5)
     assert_dataframes_close(unsorted_maps.lt , sorted_maps.lt , rtol=1e-5)
     assert_dataframes_close(unsorted_maps.ltu, sorted_maps.ltu, rtol=1e-5)
+
+def test_detector_dependence(output_maps_tmdir,
+                             folder_test_dst  ,
+                             test_dst_file    ):
+    previous_map_f = os.path.join(output_maps_tmdir, 'test_out_map.h5')
+    previous_map = read_maps(previous_map_f)
+
+    config = configure('maps $ICARO/krcal/map_builder/config_LBphys.conf'.split())
+    histo_file_out   = os.path.join(output_maps_tmdir, 'test_out_histo.h5')
+    demo_map_file_out= os.path.join(output_maps_tmdir, 'test_out_map_demo.h5')
+    default_n_bins   = 15
+    run_number       = 7517
+    map_params_new   = copy.copy(config.as_namespace.map_params)
+    map_params_new['nmin']     = 100
+    map_params_new['detector'] = 'demopp'
+    map_params_new['nStimeprofile'] = 1200
+    config.update(dict(folder         = folder_test_dst  ,
+                       file_in        = test_dst_file    ,
+                       file_out_map   = demo_map_file_out,
+                       file_out_hists = histo_file_out   ,
+                       default_n_bins = default_n_bins   ,
+                       run_number     = run_number       ,
+                       map_params     = map_params_new   ))
+
+    map_builder(config.as_namespace)
+    demo_map = read_maps(demo_map_file_out)
+    previous_driftv = previous_map.t_evol.dv
+    demo_driftv     = demo_map    .t_evol.dv
+    z_cathode_new  = DB.DetectorGeo('new').ZMAX[0]
+    z_cathode_demo = DB.DetectorGeo('demopp').ZMAX[0]
+    ratio_cathodes = z_cathode_new/z_cathode_demo
+    assert_allclose ((previous_driftv/demo_driftv).values, ratio_cathodes)
+
+
+def test_take_default_values_for_detector(output_maps_tmdir,
+                                          folder_test_dst  ,
+                                          test_dst_file    ):
+    previous_map_f = os.path.join(output_maps_tmdir, 'test_out_map.h5')
+    previous_map = read_maps(previous_map_f)
+
+    config = configure('maps $ICARO/krcal/map_builder/config_LBphys.conf'.split())
+    histo_file_out   = os.path.join(output_maps_tmdir, 'test_out_histo.h5')
+    new_map_file_out = os.path.join(output_maps_tmdir, 'test_out_map_2.h5')
+    default_n_bins   = 15
+    run_number       = 7517
+    map_params_new   = copy.copy(config.as_namespace.map_params)
+    map_params_new['nmin']     = 100
+    map_params_new['nStimeprofile'] = 1200
+    del config['map_params']['detector' ]
+    del config['map_params']['zrange_dv']
+    del config['map_params']['nbins_dv' ]
+    config.update(dict(folder         = folder_test_dst  ,
+                       file_in        = test_dst_file    ,
+                       file_out_map   = new_map_file_out ,
+                       file_out_hists = histo_file_out   ,
+                       default_n_bins = default_n_bins   ,
+                       run_number     = run_number       ,
+                       map_params     = map_params_new   ))
+
+    map_builder(config.as_namespace)
+    new_map = read_maps(new_map_file_out)
+
+    assert_dataframes_close(previous_map.e0    , new_map.e0    , rtol=1e-5)
+    assert_dataframes_close(previous_map.e0u   , new_map.e0u   , rtol=1e-5)
+    assert_dataframes_close(previous_map.lt    , new_map.lt    , rtol=1e-5)
+    assert_dataframes_close(previous_map.ltu   , new_map.ltu   , rtol=1e-5)
+    assert_dataframes_close(previous_map.t_evol, new_map.t_evol, rtol=1e-5)
+
 
 def test_exception_s1(folder_test_dst, test_dst_file, output_maps_tmdir):
     """
