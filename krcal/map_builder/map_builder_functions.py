@@ -79,7 +79,6 @@ def load_data(input_path         : str ,
     """
     Reads kdst files and applies basic R cut. Outputs kdst as pd.DataFrame,
     bootstrap map, and reference histograms
-
     Parameters
     ----------
     input_path : str
@@ -92,7 +91,6 @@ def load_data(input_path         : str ,
         Path to the reference histogram file
     quality_ranges : dict
         Dictionary containing ranges for the quality cuts
-
     Returns
     ----------
     dst_filtered : pd.DataFrame
@@ -249,7 +247,6 @@ def check_rate_and_hist(times      : np.array           ,
     Returns
     ----------
         Nothing.
-
     """
     min_time   = times.min()
     max_time   = times.max()
@@ -288,14 +285,15 @@ def band_selector_and_check(dst       : pd.DataFrame,
                            nbins_z    : int                       = 50,
                            nbins_e    : int                       = 50,
                            nsigma_sel : float                     = 3.5,
-                           eff_min   : float                      = 0.4,
-                           eff_max   : float                      = 0.6
+                           eff_min   : float                      = 0,
+                           eff_max   : float                      = 1
                            )->np.array:
+    
+
     """
     This function returns a selection of the events that
     are inside the Kr E vz Z band, and checks
     if the selection efficiency is correct.
-
     Parameters
     ----------
     dst : pd.DataFrame
@@ -392,7 +390,6 @@ def calculate_map(dst     : pd.DataFrame,
                   ):
     """
     Calculates and outputs correction map
-
     Parameters
     ---------
     dst: pd.DataFrame
@@ -436,14 +433,12 @@ def find_outliers(maps : ASectorMap, x2range : Tuple[float, float] = (0, 2)):
     """
     For a given maps and deserved range, it returns a mask where values are
     within the interval.
-
     Parameters
     ---------
     maps: ASectorMap
         Map to check the outliers
     x2range : Tuple[float, float]
         Range for chi2
-
     Returns
     ---------
     mask: pd.DataFrame
@@ -456,14 +451,12 @@ def regularize_map(maps : ASectorMap, x2range : Tuple[float, float] = (0, 2) ):
     """
     For a given map and deserved range, it replaces where values are
     outside the provided interval by the average.
-
     Parameters
     ---------
     maps: ASectorMap
         Map to check the outliers
     x2range : Tuple[float, float]
         Range for chi2
-
     Returns
     ---------
     amap: ASectorMap
@@ -501,11 +494,15 @@ def add_krevol(maps         : ASectorMap,
                nStimeprofile: int,
                x_range      : Tuple[float, float],
                y_range      : Tuple[float, float],
-               XYbins       : Tuple[int, int]
+               XYbins       : Tuple[int, int],
+               detector     : str = 'new',
+               zrange_dv    : Tuple[float, float] = (500, 625),
+               nbins_dv     : int                 = 35,
+               zrange_lt    : Tuple[float,float]  = (0, 550),
+               zslices_lt   : int                 = 50,
                                                     ) -> None:
     """
     Adds time evolution dataframe to the map
-
     Parameters
     ---------
     maps: ASectorMap
@@ -520,7 +517,6 @@ def add_krevol(maps         : ASectorMap,
         Range for x and y for the map
     XYbins: Tuple[int, int]
         Number of bins for XY map
-
     Returns
     ---------
     Nothing
@@ -544,12 +540,20 @@ def add_krevol(maps         : ASectorMap,
                              xr_map = x_range,
                              yr_map = y_range,
                              nx_map = XYbins[0],
-                             ny_map = XYbins[1])
+                             ny_map = XYbins[1],
+                             detector   = detector,
+                             zrange_lt  = zrange_lt,
+                             zslices_lt = zslices_lt,
+                             zrange_dv  = zrange_dv,
+                             nbins_dv   = nbins_dv)
 
     e0par    = np.array([pars['e0'].mean(), pars['e0'].var()**0.5])
     ltpar    = np.array([pars['lt'].mean(), pars['lt'].var()**0.5])
-    print("    Mean core E0: {0:.1f}+-{1:.1f} pes".format(*e0par))
-    print("    Mean core Lt: {0:.1f}+-{1:.1f} mus".format(*ltpar))
+    dvpar    = np.array([pars['dv'].mean(), pars['dv'].var()**0.5])
+    print("    Mean core E0: {0:.1f} \u00B1 {1:.1f} pes".format(*e0par))
+    print("    Mean core Lt: {0:.1f} \u00B1 {1:.1f} mus".format(*ltpar))
+    print("    Mean core Dv: {0:.6f} \u00B1 {1:.6f} units".format(*dvpar))
+
 
 
     maps.t_evol = pars
@@ -572,7 +576,10 @@ def compute_map(dst          : pd.DataFrame,
                 r_fid        : float = 100,
                 nStimeprofile: int = 1800,
                 x_range      : Tuple[float, float] = (-200,200),
-                y_range      : Tuple[float, float] = (-200,200)
+                y_range      : Tuple[float, float] = (-200,200),
+                detector     : str = 'new',
+                zrange_dv    : Tuple[float, float] = (500, 625),
+                nbins_dv     : int                 = 35
                                                                 ) -> ASectorMap:
 
     maps = calculate_map (dst      = dst,
@@ -614,7 +621,12 @@ def compute_map(dst          : pd.DataFrame,
                nStimeprofile = nStimeprofile,
                x_range       = x_range,
                y_range       = y_range,
-               XYbins        = XYbins)
+               XYbins        = XYbins,
+               detector      = detector,
+               zrange_lt     = z_range,
+               zslices_lt    = nbins_z,
+               zrange_dv     = zrange_dv,
+               nbins_dv      = nbins_dv)
 
     return no_peripheral
 
@@ -664,9 +676,9 @@ def map_builder(config):
 
     print("Map builder starting...")
     print("Reading input files:")
-    print("    Input dst folder   : {}".format(config.folder))
-    print("    Input boostrap map : {}".format(config.file_bootstrap_map))
-    print("    Input histogram map: {}".format(config.ref_Z_histogram['ref_histo_file']))
+    print("    Input dst folder   : {}".format(config.folder))
+    print("    Input boostrap map : {}".format(config.file_bootstrap_map))
+    print("    Input histogram map: {}".format(config.ref_Z_histogram['ref_histo_file']))
 
 
     dst, bootstrapmap, ref_histos  = load_data(input_path         = config.folder            ,
