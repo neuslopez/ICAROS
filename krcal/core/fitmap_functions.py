@@ -16,6 +16,8 @@ Last revised: Feb, 2019
 """
 import numpy as np
 import warnings
+import matplotlib.pyplot as plt
+
 from   pandas               import DataFrame
 
 from typing                 import List
@@ -26,8 +28,14 @@ from . core_functions       import value_from_measurement
 from . core_functions       import uncertainty_from_measurement
 from . fit_lt_functions     import fit_lifetime
 from . fit_lt_functions     import pars_from_fcs
+from . fit_lt_functions     import lt_params_from_fcs
 from . selection_functions  import get_time_series_df
+from . fit_functions   import   expo_seed
+from invisible_cities.core.fit_functions  import profileX
+from invisible_cities.core.fit_functions  import expo
+from invisible_cities.core.fit_functions  import fit as ft
 from . kr_types             import FitType, FitParTS
+
 
 
 import logging
@@ -93,8 +101,25 @@ def time_fcs_df(ts      : np.array,
     logging.debug(f' time_fcs_df: len(dsts) = {len(dsts)}')
     fcs =[fit_lifetime(dst[z].values, dst[energy].values,
                        nbins_z, nbins_e, range_z, range_e, fit) for dst in dsts]
+    
+    
+#     print('dst len: ',len(dst),'\n')
+#     print('dsts len: ',len(dsts),'\n')
+    
 
     e0s, lts, c2s = pars_from_fcs(fcs)
+
+#     for dst in dsts:
+#         x, y, yu = profileX(dst.Z, dst.S2e, 20,range_z,range_e)
+#         seed      = expo_seed(x, y)
+#         seed
+#         f      = ft(expo, x, y, seed, sigma=yu)
+#         plt.plot(x[:],y[:])
+#         plt.errorbar(x, y, yu, fmt="kp")
+#         plt.hist2d(dst.Z, dst.S2e, nbins_e, [(0, 400),(5000, 15000)])
+#         plt.plot(x, expo(x, *f.values[ :3]),0, alpha=0.9, color='r')
+#         print('Checking if doing alright: \n','Seed = ',seed)
+#         plt.show()
 
     return FitParTS(ts  = np.array(ts),
                     e0  = value_from_measurement(e0s),
@@ -179,8 +204,8 @@ def fit_map_xy_df(selection_map : Dict[int, List[DataFrame]],
         i = xybin[0]
         j = xybin[1]
         nevt = event_map[i][j]
-        tlast = time_diffs[-1]
-        tfrst = time_diffs[0]
+        tlast = time_diffs.max()
+        tfrst = time_diffs.min()
         ts, masks =  get_time_series_df(n_time_bins, (tfrst, tlast), selection_map[i][j])
 
         logging.debug(f' ****fit_fcs_in_xy_bin: bins ={i,j}')
