@@ -39,10 +39,10 @@ def t_evol_table(MAPSDIR):
 
 @mark.timeout(None)
 @mark.dependency()
-def test_scrip_runs_and_produces_correct_outputs(folder_test_dst  ,
-                                                 test_dst_file    ,
-                                                 output_maps_tmdir,
-                                                 test_map_file    ):
+def test_script_runs_and_produces_correct_outputs(folder_test_dst  ,
+                                                  test_dst_file    ,
+                                                  output_maps_tmdir,
+                                                  test_map_file    ):
     """
     Run map creation script and check if an ASectormap is the output.
     """
