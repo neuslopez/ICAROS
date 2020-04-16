@@ -288,7 +288,7 @@ def band_selector_and_check(dst       : pd.DataFrame,
                            eff_min   : float                      = 0,
                            eff_max   : float                      = 1
                            )->np.array:
-    
+
 
     """
     This function returns a selection of the events that
@@ -522,9 +522,12 @@ def add_krevol(maps         : ASectorMap,
     Nothing
     """
 
+    print(f'zrange_dv = {zrange_dv}; nbins_dv = {nbins_dv}' )
+
     dstf       = dst[dst.R < r_fid]
     min_time   = dstf.time.min()
     max_time   = dstf.time.max()
+    print(f'min_time= {min_time}; max_time={max_time}')
     ntimebins  = get_number_of_time_bins(nStimeprofile = nStimeprofile,
                                          tstart        = min_time,
                                          tfinal        = max_time)
