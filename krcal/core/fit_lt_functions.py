@@ -35,6 +35,9 @@ from . kr_types import FitCollection2
 from . kr_types import FitType
 from . kr_types import Measurement
 
+import matplotlib.pyplot as plt
+
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -186,6 +189,22 @@ def fit_lifetime_profile(z : np.array,
                    err = err,
                    chi2 = c2,
                    valid = valid)
+    """
+    print(f'x = {x}')
+    print(f'y = {y}')
+    print(f'errors = {yu}')
+    print(f'par0 {par[0]}')
+    print(f'par1 {par[1]}')
+
+    print(f'Num events entering in the Profile fit = {len(e)}')
+    print(f'chi2  = {c2}')
+    plt.figure(figsize=(5,3))
+    plt.hist2d(z, e, (40,40), [(0,600),(8000, 11000)], cmap='coolwarm')
+    plt.plot(x , y, yu , 'r')
+    plt.errorbar(x, y, yu, fmt="kp")
+    plt.plot(x, expo(x, par[0], -par[1]),'yellow')
+    plt.show()
+    """
 
     return fp, fp, fr
 
@@ -263,6 +282,21 @@ def fit_lifetime_unbined(z       : np.array,
 
         fp  = FitPar(x  = x,  y  = y,  xu = xu,  yu = yu,  f  = lambda z: e0 * np.exp(-z/lt))
         fp2 = FitPar(x  = xs, y  = ys, xu = xus, yu = yus, f  = lambda z: a * xs + b)
+
+        # Plotting
+        """
+        print(f'Num events entering in the Unbinned fit = {len(e)}')
+        print(f'chi2  = {c2}')
+        plt.figure(figsize=(5,3))
+        plt.hist2d(z, e, (40,40), [(0,600),(8000, 11000)], cmap='coolwarm')
+        #plt.plot(x , y, yu , 'r')
+        #plt.errorbar(x, y, yu, fmt="kp")
+
+        #plt.plot(x, expo(x, e0, lt),'yellow')
+        plt.plot(z, e0 * np.exp(-z/lt),'yellow')
+        #plt.annotate('Num of events ', len(e))
+        plt.show()
+        """
 
     except ValueError:
         logging.warn(f'Value Error found in fit_lifetime_unbined: not enough events for fit')
