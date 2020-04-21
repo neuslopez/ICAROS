@@ -8,13 +8,13 @@ from typing          import Tuple
 from typing          import Optional
 from pandas          import DataFrame
 
-from   invisible_cities.evm .ic_containers     import Measurement
-from   invisible_cities.core.system_of_units_c import units
+#from   invisible_cities.evm .ic_containers     import Measurement
+import   invisible_cities.core.system_of_units as units
 
 from ..core. stat_functions       import mean_and_std
 from ..core. core_functions       import divide_np_arrays
 from ..core. histo_functions      import profile1d
-from ..core. kr_types             import HistoPar2 
+from ..core. kr_types             import HistoPar2
 from ..core. kr_types             import ProfilePar
 from ..core. kr_types             import FitPar
 from ..core. kr_types             import S1D
@@ -84,7 +84,8 @@ def plot_time_fcs(fps        : Optional[FitParTS],
     plt.ylabel('chi2')
     plt.tight_layout()
 
-
+'''
+##not used and use deprecated Measurement
 def s1d_from_dst(dst       : DataFrame,
                  range_s1e : Tuple[float, float] = (0,40),
                  range_s1w : Tuple[float, float] = (0,500),
@@ -107,7 +108,7 @@ def s2d_from_dst(dst : DataFrame)->S2D:
                X = Measurement(*mean_and_std(dst.X.values,(-200,200))),
                Y = Measurement(*mean_and_std(dst.Y.values,(-200,200))))
 
-
+'''
 
 
 def plot_s1histos(dst, s1d, bins=20,
